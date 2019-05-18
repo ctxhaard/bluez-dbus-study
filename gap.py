@@ -1,32 +1,9 @@
-#!/usr/bin/python3
-
-from __future__ import print_function
-
 import dbus
-import dbus.exceptions
-import dbus.mainloop.glib
 import dbus.service
-from socket import gethostname
-from gatt import PCMonService
+import dbus.exceptions
 
-import array
-
-try:
-  from gi.repository import GObject  # python3
-except ImportError:
-  import gobject as GObject  # python2
-
-from random import randint
-
-mainloop = None
-
-BLUEZ_SERVICE_NAME = 'org.bluez'
-LE_ADVERTISING_MANAGER_IFACE = 'org.bluez.LEAdvertisingManager1'
-DBUS_OM_IFACE = 'org.freedesktop.DBus.ObjectManager'
-DBUS_PROP_IFACE = 'org.freedesktop.DBus.Properties'
-
+DBUS_PROP_IFACE =    'org.freedesktop.DBus.Properties'
 LE_ADVERTISEMENT_IFACE = 'org.bluez.LEAdvertisement1'
-
 
 class InvalidArgsException(dbus.exceptions.DBusException):
     _dbus_error_name = 'org.freedesktop.DBus.Error.InvalidArgs'
@@ -138,68 +115,6 @@ class Advertisement(dbus.service.Object):
     def Release(self):
         print('%s: Released!' % self.path)
 
-class PCMonAdvertisement(Advertisement):
-
-    def __init__(self, bus, index):
-        Advertisement.__init__(self, bus, index, 'peripheral')
-        self.add_service_uuid(PCMonService.UUID)
-#        self.add_manufacturer_data(0xffff, [0x00, 0x01, 0x02, 0x03, 0x04])
-#        self.add_service_data('9999', [0x00, 0x01, 0x02, 0x03, 0x04])
-        self.add_local_name(gethostname())
-        self.include_tx_power = True
-#        self.add_data(0x26, [0x01, 0x01, 0x00])
 
 
-def register_ad_cb():
-    print('Advertisement registered')
 
-
-def register_ad_error_cb(error):
-    print('Failed to register advertisement: ' + str(error))
-    mainloop.quit()
-
-
-def find_adapter(bus):
-    remote_om = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/'),
-                               DBUS_OM_IFACE)
-    objects = remote_om.GetManagedObjects()
-
-    for o, props in objects.items():
-        if LE_ADVERTISING_MANAGER_IFACE in props:
-            return o
-
-    return None
-
-
-def main():
-    global mainloop
-
-    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-
-    bus = dbus.SystemBus()
-
-    adapter = find_adapter(bus)
-    if not adapter:
-        print('LEAdvertisingManager1 interface not found')
-        return
-
-    adapter_props = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-                                   "org.freedesktop.DBus.Properties");
-
-    adapter_props.Set("org.bluez.Adapter1", "Powered", dbus.Boolean(1))
-
-    ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-                                LE_ADVERTISING_MANAGER_IFACE)
-
-    test_advertisement = PCMonAdvertisement(bus, 0)
-
-    mainloop = GObject.MainLoop()
-
-    ad_manager.RegisterAdvertisement(test_advertisement.get_path(), {},
-                                     reply_handler=register_ad_cb,
-                                     error_handler=register_ad_error_cb)
-
-    mainloop.run()
-
-if __name__ == '__main__':
-    main()

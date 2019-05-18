@@ -1,15 +1,12 @@
-from pydbus import SystemBus
-from gi.repository import GLib
+#!/usr/bin/python3
 
-def log(func):
-    def wrapper(*args, **kwargs):
-        print(func.__name__)
-        return func(*args,**kwargs)
-    return wrapper
+from pydbus import SystemBus, SessionBus
+from gi.repository import GLib
+from util import log
 
 class LEAdvertisement1:
     """
-<node>
+    <node>
     <interface name="org.bluez.LEAdvertisement1">
         <method name="Release">
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
@@ -26,7 +23,7 @@ class LEAdvertisement1:
         <property name="Duration" type="q" access="read"/>
         <property name="Timeout" type="q" access="read"/>
     </interface>
-</node>
+    </node>
     """
 
     def Release(self):
@@ -65,7 +62,7 @@ class LEAdvertisement1:
     @property
     @log
     def LocalName(self):
-        return "CARLO"
+        return 'CARLO'
 
     @property
     @log
@@ -89,7 +86,6 @@ if __name__ == '__main__':
 
     obj_path = '/org/bluez/example/advertisement0'
     bus.register_object(obj_path, LEAdvertisement1(), None)
-
     mgr = bus.get('org.bluez','/org/bluez/hci0')
 
     try:
