@@ -56,6 +56,12 @@ def register_app_error_cb(error):
     print('Failed to register application: ' + str(error))
     mainloop.quit()
 
+class PCMonApplication(Application):
+
+    def __init__(self, bus):
+        Application.__init__(self, bus)
+        self.add_service(PCMonService(bus, 0))
+        
 
 def main():
     global mainloop
@@ -73,9 +79,7 @@ def main():
             bus.get_object(BLUEZ_SERVICE_NAME, adapter),
             GATT_MANAGER_IFACE)
 
-    app = Application(bus)
-    app.add_service(PCMonService(bus, 0))
-
+    app = PCMonApplication(bus)
 
     mainloop = GObject.MainLoop()
 
