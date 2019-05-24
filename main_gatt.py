@@ -27,7 +27,7 @@ class PCMonService(Service):
 #        self.add_characteristic(BatteryLevelChrc(bus, 1, self))
 #        self.add_characteristic(IPv4Chrc(bus, 2, self))
 #        self.add_characteristic(IPv6Chrc(bus, 3, self))
-#        self.add_characteristic(CoreTempChrc(bus, 4, self))
+        self.add_characteristic(CoreTempChrc(bus, 4, self))
         self.energy_expended = 0
 
 class NameChrc(Characteristic):
@@ -45,6 +45,24 @@ class NameChrc(Characteristic):
         s = gethostname()
         ay = [dbus.Byte(c) for c in bytes(s, 'utf-8')]
         return ay
+
+class CoreTempChrc(Characteristic):
+    UUID = '7448cd65-5844-4260-a421-466cf474884e'
+
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(
+            self, bus, index,
+            self.UUID,['read'],
+            service)
+
+    def ReadValue(self, options):
+        with open('/sys/class/thermal/thermal_zone0/temp','r') as f:
+            _ = f.read().rstrip()
+            _ = int(_)
+            _ = _ // 1000
+            _ = str(_)
+            ay = [dbus.Byte(c) for c in bytes(_, 'utf-8')]
+            return ay
 
 # TODO: definire le caratteristiche del mio servizio
 
